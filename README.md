@@ -40,9 +40,15 @@ hefesto-dualsense4unix mod ligar hookshot
 
 Também se instala de uma pasta local (`mod instalar /caminho/da/pasta`), e essa nunca se atualiza sozinha.
 
-O «ligar» roda o `install.sh --yes`, sem sudo. Remover: `hefesto-dualsense4unix mod remover hookshot` e
-`./uninstall.sh`, que desfaz o comando, o atalho, o perfil que ele pôs e os botões, sem tocar no que você mudou
-depois.
+O «ligar» roda o `install.sh --yes`, sem sudo. Remover, nesta ordem (o `mod remover` apaga a pasta onde o
+`uninstall.sh` mora):
+
+```bash
+bash ~/.local/share/hefesto-dualsense4unix/mods/hookshot/uninstall.sh
+hefesto-dualsense4unix mod remover hookshot
+```
+
+O `uninstall.sh` desfaz o comando, o atalho, o perfil que ele pôs e os botões, sem tocar no que você mudou depois.
 
 ## Testes
 
