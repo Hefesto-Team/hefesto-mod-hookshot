@@ -1,0 +1,23 @@
+{
+  "name": "Hookshot",
+  "version": 1,
+  "match": {
+    "type": "criteria",
+    "window_class": ["hookshot"],
+    "window_title_regex": null,
+    "process_name": ["hookshot"]
+  },
+  "priority": 80,
+  "triggers": {
+    "left": {"mode": "Feedback", "params": [3, 2]},
+    "right": {"mode": "Feedback", "params": [3, 2]}
+  },
+  "leds": {
+    "lightbar": [30, 140, 60],
+    "player_leds": [false, false, false, false, false],
+    "lightbar_brightness": 0.8,
+    "auto_player_colors": true
+  },
+  "rumble": {"passthrough": true},
+  "key_bindings": null
+}
