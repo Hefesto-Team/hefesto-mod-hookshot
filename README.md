@@ -24,6 +24,10 @@ A extensão não traz nem baixa o jogo nem o Hookshot. Do cartucho até o jogo c
   quando a janela ou o processo `hookshot` aparece: a vibração do jogo passa aos dois motores, os gatilhos ganham um
   toque leve e cada controle mantém a cor do jogador. O giroscópio chega ao jogo pelo próprio controle; na máscara
   Xbox, ligue a «Mira Virtual» do controle no Hefesto.
+- **A janela «Configurar».** No «Agora», o Hookshot e o jogo em cor, com o motivo na dica. Na aba Jogo, os
+  «Botões» (Posição ou Nintendo), que valem ao abrir o jogo. Na aba Controles, um cartão por controle, pela cor
+  do plástico, com a Luz, os Gatilhos e a Vibração dele, que só valem com o jogo aberto. Na aba Dump, os quatro
+  passos e o que o Hookshot confere.
 - **De 1 a 4 controles, pelo cabo ou pelo rádio.** Os botões valem para qualquer controle, e o perfil não separa
   controle, modo nem conexão.
 
@@ -33,6 +37,8 @@ A extensão não traz nem baixa o jogo nem o Hookshot. Do cartucho até o jogo c
 hefesto-dualsense4unix mod instalar https://github.com/vitoriamariadb/hefesto-mod-hookshot
 hefesto-dualsense4unix mod ligar hookshot
 ```
+
+Também se instala de uma pasta local (`mod instalar /caminho/da/pasta`), e essa nunca se atualiza sozinha.
 
 O «ligar» roda o `install.sh --yes`, sem sudo. Remover: `hefesto-dualsense4unix mod remover hookshot` e
 `./uninstall.sh`, que desfaz o comando, o atalho, o perfil que ele pôs e os botões, sem tocar no que você mudou
