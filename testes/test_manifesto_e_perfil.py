@@ -35,7 +35,7 @@ def test_o_perfil_reconhece_o_jogo_pela_janela_e_pelo_processo() -> None:
 def test_o_perfil_nao_separa_controle_modo_nem_conexao() -> None:
     assert "controllers" not in PERFIL
     assert "mode" not in PERFIL
-    assert "controles_modo" not in PERFIL
+    assert PERFIL["controles_modo"] == "extensao:hookshot"
     assert "movimento" not in PERFIL
     assert PERFIL["rumble"]["passthrough"] is True
     assert PERFIL["leds"]["auto_player_colors"] is True

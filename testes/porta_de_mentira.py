@@ -25,6 +25,7 @@ class PortaDeMentira:
         self.controles = list(MESA_MISTA if controles is None else controles)
         self.pedidos: list[tuple[str, dict[str, Any]]] = []
         self.escritores: list[asyncio.StreamWriter] = []
+        self.modos: dict[str, str] | None = None
 
     def de(self, metodo: str) -> list[dict[str, Any]]:
         return [p for m, p in self.pedidos if m == metodo]
@@ -39,6 +40,14 @@ class PortaDeMentira:
             metodo, params = pedido["method"], pedido.get("params") or {}
             self.pedidos.append((metodo, params))
             resultado: Any = {"status": "ok"}
+            if (metodo == "mira.ligada" and self.modos is not None
+                    and params.get("ligada") is False
+                    and self.modos.get(str(params.get("uniq"))) != "extensao:hookshot"):
+                escritor.write(json.dumps({"jsonrpc": "2.0", "id": pedido["id"], "error": {
+                    "code": -32013, "message": "a seção Controles deste controle não está no "
+                    "modo da extensão"}}).encode() + b"\n")
+                await escritor.drain()
+                continue
             if metodo == "mod.ola":
                 resultado = {"id": "hookshot", "api": 2, "permissoes": []}
             elif metodo == "controles.lista":

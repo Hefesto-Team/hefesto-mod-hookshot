@@ -8,8 +8,12 @@
 - Cada controle ganha a chave «Giroscópio». Desligada, a mira pelo giroscópio fica parada naquele
   controle enquanto o jogo está aberto (`mira.ligada`), e volta ao fechar o jogo ou ao parar a
   extensão.
+- A extensão traz o modo «Hookshot» na aba Controles, e o perfil do jogo nasce com ele aceso: o
+  Hefesto só deixa a extensão desligar o giroscópio do controle cuja seção Controles está no modo
+  dela. Quando o modo acende depois do jogo, a chave vale na hora; quando ele apaga, o giroscópio
+  volta (`ler:modo.aba`).
 - Pede o Hefesto que abre o jogo e desliga o giroscópio de um controle (`pedir:lancador.abrir`,
-  `escrever:mira`). Um Hefesto mais velho recusa a instalação e diz por quê.
+  `escrever:mira`, `ler:modo.aba`). Um Hefesto mais velho recusa a instalação e diz por quê.
 
 ## 1.1.0 (14/11/2026)
 

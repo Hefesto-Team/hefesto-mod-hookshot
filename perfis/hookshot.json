@@ -8,6 +8,7 @@
     "process_name": ["hookshot"]
   },
   "priority": 80,
+  "controles_modo": "extensao:hookshot",
   "triggers": {
     "left": {"mode": "Feedback", "params": [3, 2]},
     "right": {"mode": "Feedback", "params": [3, 2]}

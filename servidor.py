@@ -19,7 +19,8 @@ if str(AQUI) not in sys.path:
 
 import janela  # noqa: E402
 
-TOPICOS = ["conexao", "perfil.jogo", "jogo.vibracao"]
+TOPICOS = ["conexao", "perfil.jogo", "jogo.vibracao", "modo.aba"]
+MODO_DA_EXTENSAO = "extensao:hookshot"
 EVENTO_DA_ACAO = "extensao.acao"
 ESCOLHAS = "controles.json"
 RETRATO = "retrato.json"
@@ -173,11 +174,13 @@ class Extensao:
         return next((str(c["uniq"]) for c in self.controles
                      if janela.ident(str(c["uniq"])) == alvo), None)
 
-    async def _escrever(self, metodo: str, params: dict[str, Any]) -> None:
+    async def _escrever(self, metodo: str, params: dict[str, Any]) -> bool:
         try:
             await self.porta.pedir(metodo, params)
         except (RecusaDaPorta, asyncio.TimeoutError) as exc:
             diario(f"{metodo}: {exc}")
+            return False
+        return True
 
     async def aplicar(self, uniq: str) -> None:
         escolha = janela.escolha_de(self.escolhas, janela.ident(uniq))
@@ -210,11 +213,21 @@ class Extensao:
         desligado = self.em_cena and escolha["giro"] is False
         if desligado == ((uniq, "giro") in self.pedidos):
             return
-        if desligado:
-            self.pedidos.add((uniq, "giro"))
-        else:
+        if await self._escrever("mira.ligada", {"uniq": uniq, "ligada": not desligado}):
+            if desligado:
+                self.pedidos.add((uniq, "giro"))
+            else:
+                self.pedidos.discard((uniq, "giro"))
+
+    async def o_modo_mudou(self, dados: dict[str, Any]) -> None:
+        uniq, secoes = dados.get("uniq"), dados.get("secoes")
+        if not isinstance(uniq, str) or not isinstance(secoes, dict):
+            return
+        if secoes.get("controles") != MODO_DA_EXTENSAO:
             self.pedidos.discard((uniq, "giro"))
-        await self._escrever("mira.ligada", {"uniq": uniq, "ligada": not desligado})
+            return
+        if uniq in {str(c["uniq"]) for c in self.controles}:
+            await self.aplicar_o_giro(uniq, janela.escolha_de(self.escolhas, janela.ident(uniq)))
 
     async def jogar(self) -> None:
         try:
@@ -303,6 +316,8 @@ class Extensao:
             await self.o_perfil_trocou(dados)
         elif nome == "jogo.vibracao" and isinstance(dados, dict):
             await self.vibracao_do_jogo(params, dados)
+        elif nome == "modo.aba" and isinstance(dados, dict):
+            await self.o_modo_mudou(dados)
         elif params.get("topico") == "conexao":
             with contextlib.suppress(RecusaDaPorta, ConnectionError, asyncio.TimeoutError):
                 await self.atualizar_os_controles()

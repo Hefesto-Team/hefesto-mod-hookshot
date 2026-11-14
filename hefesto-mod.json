@@ -23,6 +23,7 @@
     "ler:conexao",
     "ler:perfil.jogo",
     "ler:jogo.vibracao",
+    "ler:modo.aba",
     "publicar:acessorios.estado",
     "escrever:luz",
     "escrever:gatilho",
@@ -86,6 +87,16 @@
     "rotulo": "Dump",
     "altura_max": 300
   },
+  "modos_de_aba": [
+    {
+      "id": "hookshot",
+      "rotulo": "Hookshot",
+      "dica": "O giroscópio de cada controle segue a janela da extensão.",
+      "abas": [
+        "02"
+      ]
+    }
+  ],
   "acoes": [
     {
       "id": "jogar",

@@ -98,3 +98,66 @@ def test_o_giroscopio_desligado_vale_so_naquele_controle_e_so_com_o_jogo_aberto(
     assert {c["id"]: c["valor"] for c in cartao["controles"]}["giro"] is False
     gravado = json.loads((tmp_path / "controles.json").read_text(encoding="utf-8"))
     assert gravado[alvo]["giro"] is False
+
+
+@pytest.mark.parametrize("uniq", [c["uniq"] for c in MESA_MISTA])
+def test_o_giroscopio_espera_o_modo_da_extensao_e_volta_a_pedir_quando_ele_acende(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, uniq: str) -> None:
+    alvo = janela.ident(uniq)
+
+    def modo(valor: str) -> dict[str, Any]:
+        return {"uniq": uniq, "jogador": 1, "secoes": {"controles": valor}}
+
+    async def corpo(porta: PortaDeMentira, _ext: Any) -> None:
+        porta.modos = {}
+        await ate(lambda: bool(porta.de("acessorios.estado")))
+        await porta.evento("extensao.acao", {"mod": "hookshot", "acao": "giro",
+                                             "alvo": alvo, "valor": False})
+        await ate(lambda: len(porta.de("acessorios.estado")) >= 2)
+        await porta.evento("perfil.trocou", NA_CENA, "perfil.jogo")
+        await ate(lambda: len(porta.de("mira.ligada")) >= 1)
+        porta.modos[uniq] = servidor.MODO_DA_EXTENSAO
+        await porta.evento("modo.aba", modo(servidor.MODO_DA_EXTENSAO), "modo.aba")
+        await ate(lambda: len(porta.de("mira.ligada")) >= 2)
+        porta.modos[uniq] = "personalizado"
+        await porta.evento("modo.aba", modo("personalizado"), "modo.aba")
+        porta.modos[uniq] = servidor.MODO_DA_EXTENSAO
+        await porta.evento("modo.aba", modo(servidor.MODO_DA_EXTENSAO), "modo.aba")
+        await ate(lambda: len(porta.de("mira.ligada")) >= 3)
+        await porta.evento("perfil.trocou", FORA_DE_CENA, "perfil.jogo")
+        await ate(lambda: len(porta.de("mira.ligada")) >= 4)
+
+    porta = rodar_com_a_porta(tmp_path, monkeypatch, corpo, dados=tmp_path)
+    desligado, ligado = {"uniq": uniq, "ligada": False}, {"uniq": uniq, "ligada": True}
+    assert porta.de("mira.ligada") == [desligado, desligado, desligado, ligado]
+
+
+def test_o_perfil_do_jogo_acende_o_modo_e_a_guarda_do_hefesto_deixa_os_quatro(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    pytest.importorskip("hefesto_dualsense4unix")
+    from types import SimpleNamespace
+
+    from hefesto_dualsense4unix.core.virtual_motion import chave_de_sensor
+    from hefesto_dualsense4unix.daemon.subsystems import tato_vivo
+    from hefesto_dualsense4unix.mods.manifesto import ler_manifesto
+    from hefesto_dualsense4unix.mods.porta import Porta as PortaDoHefesto
+    from hefesto_dualsense4unix.profiles.schema import modo_que_vale
+
+    perfil = json.loads((RAIZ / "perfis" / "hookshot.json").read_text(encoding="utf-8"))
+    assert ["02"] in [m.abas for m in ler_manifesto(RAIZ).modos_de_aba]
+
+    def no_modo(perfil_lido: dict[str, Any], vivas: frozenset[str], mod_id: str) -> set[str]:
+        monkeypatch.setattr(tato_vivo, "_MODO_DA_ABA_DITO", {c["uniq"]: {
+            "uniq": c["uniq"], "jogador": c["jogador"], "secoes": {
+                s: modo_que_vale(m, vivas) or m
+                for s, m in tato_vivo.secoes_do_perfil(perfil_lido, c["uniq"]).items()}}
+            for c in MESA_MISTA})
+        sessao: Any = SimpleNamespace(mod_id=mod_id)
+        return set(PortaDoHefesto._no_modo_da_extensao(sessao))
+
+    quatro = {chave_de_sensor(c["uniq"]) for c in MESA_MISTA}
+    assert no_modo(perfil, frozenset({"hookshot"}), "hookshot") == quatro
+    assert no_modo(perfil, frozenset(), "hookshot") == set()
+    assert no_modo(perfil, frozenset({"hookshot", "outra"}), "outra") == set()
+    sem_modo = {k: v for k, v in perfil.items() if k != "controles_modo"}
+    assert no_modo(sem_modo, frozenset({"hookshot"}), "hookshot") == set()
