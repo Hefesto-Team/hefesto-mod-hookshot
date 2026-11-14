@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:transparent;color:var(--fg,#e6e6e6);font:13px/1.35 system-ui,sans-serif}
+main{display:flex;flex-direction:column;gap:12px;padding:10px 12px;box-sizing:border-box;height:100%}
+ol{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0;padding:0;list-style:none}
+li{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;border:1px solid var(--border-sutil,#333);border-radius:8px;background:var(--elevated,#22252e);cursor:help}
+li b{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--sel-bg,#3a3f4f);color:var(--cyan,#8be9fd);font-weight:600}
+li span{font-weight:600;text-align:center}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;padding:10px 12px;border:1px solid var(--border-sutil,#333);border-radius:8px}
+dt{color:var(--texto-suave,#aaa)}
+dd{margin:0;font-family:ui-monospace,monospace;cursor:help}
+p{margin:0;color:var(--texto-mudo,#888);cursor:help}
+</style>
+</head>
+<body>
+<main>
+<ol>
+<li id="passo-console" title="Com o cartucho no Switch 2 e o console na internet, deixe o jogo baixar a atualização v131072"><b>1</b><span>Atualizar</span></li>
+<li id="passo-despejo" title="Despeje o cartucho com a atualização num arquivo .nup (sem cifra), de cerca de 23,8 GB. Só do cartucho que é seu"><b>2</b><span>Despejo</span></li>
+<li id="passo-compilar" title="No Hookshot: --cli --nup &lt;arquivo&gt; --out ~/Games/Hookshot. Leva de 10 a 45 minutos e pede 45 GB livres"><b>3</b><span>Compilar</span></li>
+<li id="passo-jogar" title="O Ocarina of Time aparece na aba Experimental, na linha do Hookshot, e no menu de aplicativos"><b>4</b><span>Jogar</span></li>
+</ol>
+<dl>
+<dt>Build</dt><dd title="O Hookshot confere o build ID do executável do jogo; ele não publica SHA do despejo">e0f3ccfa</dd>
+<dt>Versão</dt><dd title="A atualização que o Hookshot aceita">v131072</dd>
+<dt>AppImage</dt><dd id="sha-do-appimage" title="SHA-256 do Hookshot-v2.1.0-x86_64.AppImage: c0b2e958ae00dc560072154f890b9be422724abd9bb522d6afd9922788b86e02">c0b2e958…6e02</dd>
+</dl>
+<p title="O guia inteiro, com o hardware, o preço e a lei, está em docs/GUIA-DO-DUMP.md, na pasta da extensão">Guia completo</p>
+</main>
+</body>
+</html>

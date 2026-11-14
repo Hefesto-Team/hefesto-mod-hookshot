@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from conftest import RAIZ
 
-ALVOS = ["hookshot.py", "testes"]
+ALVOS = ["hookshot.py", "janela.py", "servidor.py", "testes"]
 
 
 def _ferramenta(nome: str) -> str:

@@ -11,8 +11,9 @@ PERFIL = json.loads((RAIZ / "perfis" / "hookshot.json").read_text(encoding="utf-
 def test_o_manifesto_declara_o_lancador_com_leitor_e_preparo() -> None:
     assert MANIFESTO["id"] == "hookshot"
     assert MANIFESTO["licenca"] == "GPL-3.0-or-later"
-    assert MANIFESTO["tipos"] == ["lancador"]
-    assert MANIFESTO["permissoes"] == ["lancador"]
+    assert MANIFESTO["tipos"] == ["lancador", "processo"]
+    assert MANIFESTO["processo"]["executar"] == ["python3", "-I", "servidor.py"]
+    assert MANIFESTO["permissoes"][0] == "lancador"
     assert MANIFESTO["preparar"] == ["bash", "install.sh", "--yes"]
     lancador = MANIFESTO["lancador"]
     assert lancador["comandos"] == ["hefesto-hookshot"]

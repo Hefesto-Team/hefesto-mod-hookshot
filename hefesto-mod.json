@@ -1,26 +1,87 @@
 {
   "id": "hookshot",
   "nome": "Hookshot",
-  "versao": "1.0.0",
+  "versao": "1.1.0",
   "api": ">=2,<3",
   "licenca": "GPL-3.0-or-later",
   "descricao": "O Ocarina of Time recompilado pelo Hookshot na aba Experimental do Hefesto, com o DualSense pronto: os botões, a vibração, a mira pelo giroscópio e o perfil do jogo.",
   "aviso": "Extensão independente: não é afiliada ao projeto Hookshot nem à Nintendo, e nenhum dos dois a endossa. Ela não traz o jogo: jogue só o que você copiou do cartucho que comprou, no seu próprio console; não baixe jogo pirata.",
-  "tipos": ["lancador"],
-  "permissoes": ["lancador"],
-  "preparar": ["bash", "install.sh", "--yes"],
+  "tipos": [
+    "lancador",
+    "processo"
+  ],
+  "processo": {
+    "executar": [
+      "python3",
+      "-I",
+      "servidor.py"
+    ]
+  },
+  "permissoes": [
+    "lancador",
+    "ler:conexao",
+    "ler:perfil.jogo",
+    "ler:jogo.vibracao",
+    "publicar:acessorios.estado",
+    "escrever:luz",
+    "escrever:gatilho",
+    "escrever:vibracao"
+  ],
+  "preparar": [
+    "bash",
+    "install.sh",
+    "--yes"
+  ],
   "lancador": {
     "rotulo": "Hookshot",
-    "atalhos": ["hefesto-hookshot"],
-    "comandos": ["hefesto-hookshot"],
-    "janelas": ["hookshot"],
+    "atalhos": [
+      "hefesto-hookshot"
+    ],
+    "comandos": [
+      "hefesto-hookshot"
+    ],
+    "janelas": [
+      "hookshot"
+    ],
     "leitor": {
-      "executar": ["python3", "-I", "hookshot.py", "leitor"],
+      "executar": [
+        "python3",
+        "-I",
+        "hookshot.py",
+        "leitor"
+      ],
       "prazo_s": 5,
       "fontes": [
         ".config/hookshot/builder.ini",
         "Games/Hookshot/bin/*"
       ]
     }
+  },
+  "opcoes": [
+    {
+      "id": "botoes",
+      "rotulo": "Botões",
+      "tipo": "escolha",
+      "escolhas": [
+        "Posição",
+        "Nintendo"
+      ],
+      "padrao": "Posição",
+      "grupo": "Jogo",
+      "dica": "Posição: a Cruz é o A. Nintendo: o Círculo é o A, como no Switch. Vale ao abrir o jogo"
+    }
+  ],
+  "agora": [
+    "conexoes",
+    "linhas",
+    "aparelhos"
+  ],
+  "aparelhos_controles": {
+    "grupo": "Controles"
+  },
+  "pagina": {
+    "arquivo": "pagina/dump.html",
+    "rotulo": "Dump",
+    "altura_max": 300
   }
 }
