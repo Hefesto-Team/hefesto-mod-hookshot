@@ -1,0 +1,21 @@
+[project]
+name = "hefesto-mod-hookshot"
+version = "1.0.0"
+description = "O Zelda do Hookshot no Hefesto, com o DualSense."
+license = "GPL-3.0-or-later"
+requires-python = ">=3.10"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+extend-select = ["E402", "B", "UP", "S"]
+ignore = ["S603", "S606", "S101"]
+
+[tool.ruff.lint.per-file-ignores]
+"testes/*" = ["S"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
