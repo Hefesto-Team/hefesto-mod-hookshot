@@ -22,7 +22,7 @@ deduzido do nome de um arquivo ou do costume de outro programa.
 | O repositório `NotRexed/Hookshot` | **responde 404** em 14/11/2026, pela API e pela página | GH |
 | O usuário `NotRexed` | **responde 404** em 14/11/2026 | GH |
 | A última cópia pública do repositório | Internet Archive, 13/11/2026 05h20 UTC | GH (API `archive.org/wayback/available`) |
-| O motivo do sumiço | não medido (nenhuma notícia de remoção encontrada) | BUSCA |
+| Onde o projeto mora agora | https://git.notrexed.dev/Hookshot/Hookshot (Forgejo), com a v2.1.0 de 11/11/2026 e o AppImage; o endereço sai de https://notrexed.dev/ | medido por quem coordena, 14/11/2026 |
 | O `hookshot.pro` | site de terceiros, com anúncios e analytics; diz não ser afiliado ao autor nem à Nintendo e que os downloads apontam para os releases do GitHub, que hoje não respondem | SITE (`/about/`) |
 
 Consequência: o AppImage não tem mais origem oficial alcançável, e o botão «Update» do lançador busca a versão nova

@@ -34,7 +34,7 @@ A extensão não traz nem baixa o jogo nem o Hookshot. Do cartucho até o jogo c
 ## Instalar
 
 ```bash
-hefesto-dualsense4unix mod instalar https://github.com/vitoriamariadb/hefesto-mod-hookshot
+hefesto-dualsense4unix mod instalar https://github.com/Hefesto-Team/hefesto-mod-hookshot
 hefesto-dualsense4unix mod ligar hookshot
 ```
 

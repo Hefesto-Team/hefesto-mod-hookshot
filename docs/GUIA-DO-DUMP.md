@@ -4,11 +4,11 @@ Este guia vale para quem **tem o cartucho** de The Legend of Zelda: Ocarina of T
 jogá-lo no PC pelo Hookshot. Ele não aponta ROM, chave nem jogo pronto, e não serve para cópia de terceiros. As
 fontes de cada afirmação estão em [O-QUE-SE-MEDIU.md](O-QUE-SE-MEDIU.md), medidas em 14/11/2026.
 
-## Antes de tudo: o Hookshot saiu do ar
+## Antes de tudo: onde baixar o Hookshot
 
-Em 14/11/2026 o repositório `NotRexed/Hookshot` e o próprio usuário `NotRexed` respondem 404 no GitHub. A última
-cópia pública é a do Internet Archive de 13/11/2026. O `hookshot.pro` é um site de terceiros e manda baixar dos
-releases do GitHub, que não respondem mais.
+O projeto saiu do GitHub (`NotRexed/Hookshot` responde 404 desde 14/11/2026) e mora agora em
+https://git.notrexed.dev/Hookshot/Hookshot (Forgejo do próprio autor, ligado por https://notrexed.dev/). A v2.1.0 de
+11/11/2026 está lá, com o `Hookshot-v2.1.0-x86_64.AppImage`. O `hookshot.pro` é um site de terceiros.
 
 - Quem já tem o `Hookshot-v2.1.0-x86_64.AppImage` guarda o arquivo e confere:
 
