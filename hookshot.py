@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import configparser
+import contextlib
+import hashlib
 import json
 import os
 import re
@@ -19,6 +21,13 @@ PASTA_PADRAO = Path("Games") / "Hookshot"
 OPCOES = "hookshot_options.ini"
 SUFIXO_DO_REGISTRO = ".hefesto.json"
 SUFIXO_DA_COPIA = ".antes-do-hefesto"
+
+ID_DA_EXTENSAO = "hookshot"
+RETRATO = "retrato.json"
+DANIFICADOS = "hookshot_damaged_files.txt"
+POSICAO = "Posição"
+NINTENDO = "Nintendo"
+DISPOSICOES = (POSICAO, NINTENDO)
 
 POSICAO_DO_BOTAO: dict[str, int] = {
     "a": 0,
@@ -134,8 +143,31 @@ def _valores_do_pad(linhas: Sequence[str]) -> dict[str, str]:
     return valores
 
 
-def mapa_desejado() -> dict[str, str]:
-    return {f"pad_{botao}": str(posicao) for botao, posicao in POSICAO_DO_BOTAO.items()}
+TROCA_DA_NINTENDO: dict[str, int] = {"a": 1, "b": 0, "x": 3, "y": 2}
+
+
+def mapa_desejado(disposicao: str = POSICAO) -> dict[str, str]:
+    posicoes = dict(POSICAO_DO_BOTAO)
+    if disposicao == NINTENDO:
+        posicoes.update(TROCA_DA_NINTENDO)
+    return {f"pad_{botao}": str(posicao) for botao, posicao in posicoes.items()}
+
+
+def pasta_de_dados(lar: Path | None = None) -> Path:
+    dada = os.environ.get("HEFESTO_MOD_DADOS", "").strip()
+    if os.path.isabs(dada):
+        return Path(dada)
+    estado = _xdg("XDG_STATE_HOME", _lar(lar) / ".local" / "state")
+    return estado / "hefesto-dualsense4unix" / "mods" / ID_DA_EXTENSAO
+
+
+def disposicao_escolhida(dados: Path) -> str:
+    try:
+        opcoes = json.loads((dados / "opcoes.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return POSICAO
+    escolha = opcoes.get("botoes") if isinstance(opcoes, dict) else None
+    return escolha if escolha in DISPOSICOES else POSICAO
 
 
 def _com_os_valores(linhas: list[str], valores: Mapping[str, str | None]) -> list[str]:
@@ -199,17 +231,44 @@ def _anteriores(guardado: Mapping[str, object]) -> dict[str, str | None]:
     return {str(k): (None if v is None else str(v)) for k, v in bruto.items()}
 
 
-def preparar_controles(pasta: Path, *, forcar: bool = False) -> str:
+def _escrito(guardado: Mapping[str, object]) -> dict[str, str]:
+    bruto = guardado.get("escrito")
+    return {str(k): str(v) for k, v in bruto.items()} if isinstance(bruto, dict) else {}
+
+
+def _trocar_a_disposicao(pasta: Path, guardado: Mapping[str, object],
+                         desejado: dict[str, str]) -> str:
+    ini = pasta / OPCOES
+    original = ini.read_text(encoding="utf-8", errors="surrogateescape") if ini.is_file() else ""
+    linhas = original.splitlines()
+    atuais = _valores_do_pad(linhas)
+    escrito = _escrito(guardado)
+    troca = {chave: valor for chave, valor in desejado.items()
+             if atuais.get(chave) == escrito.get(chave)}
+    novo = _texto(_com_os_valores(linhas, troca))
+    if novo != original:
+        _gravar(ini, novo)
+    _gravar(registro(pasta), json.dumps(
+        {"escrito": desejado, "antes": _anteriores(guardado),
+         "existia": bool(guardado.get("existia", True))},
+        ensure_ascii=False, indent=1) + "\n")
+    return "trocado"
+
+
+def preparar_controles(pasta: Path, *, forcar: bool = False,
+                       disposicao: str = POSICAO) -> str:
     if not e_pasta_do_jogo(pasta):
         return "sem-jogo"
     guardado = _ler_registro(pasta)
+    desejado = mapa_desejado(disposicao)
     if guardado is not None and not forcar:
-        return "ja-preparado"
+        if _escrito(guardado) == desejado:
+            return "ja-preparado"
+        return _trocar_a_disposicao(pasta, guardado, desejado)
     ini = pasta / OPCOES
     existia = ini.is_file()
     original = ini.read_text(encoding="utf-8", errors="surrogateescape") if existia else ""
     linhas = original.splitlines()
-    desejado = mapa_desejado()
     if guardado is None:
         atuais = _valores_do_pad(linhas)
         guardado = {"antes": {chave: atuais.get(chave) for chave in desejado},
@@ -232,8 +291,7 @@ def desfazer_controles(pasta: Path) -> str:
     if not guardado_em.is_file():
         return "nada"
     guardado = _ler_registro(pasta) or {}
-    bruto = guardado.get("escrito")
-    escrito = {str(k): str(v) for k, v in bruto.items()} if isinstance(bruto, dict) else {}
+    escrito = _escrito(guardado)
     anteriores = _anteriores(guardado)
     ini = pasta / OPCOES
     if ini.is_file():
@@ -251,6 +309,83 @@ def desfazer_controles(pasta: Path) -> str:
         copia(pasta).unlink()
     guardado_em.unlink()
     return "desfeito"
+
+
+def _caminhos_do_appimage(casa: Path, pasta: Path | None) -> list[Path]:
+    achados = [p for p in _caminhos_do_builder(ini_do_builder(casa), casa)
+               if p.suffix.lower() == ".appimage"]
+    for onde in ([pasta] if pasta else []) + [casa / "Applications", casa / "Downloads", casa]:
+        try:
+            soltos = [p for p in onde.iterdir()
+                      if p.suffix.lower() == ".appimage" and "hookshot" in p.name.lower()]
+        except OSError:
+            continue
+        achados += sorted(soltos, key=lambda p: p.stat().st_mtime_ns, reverse=True)
+    return [p for p in achados if p.is_file()]
+
+
+def _sha256(caminho: Path) -> str:
+    soma = hashlib.sha256()
+    with caminho.open("rb") as entrada:
+        for bloco in iter(lambda: entrada.read(1 << 20), b""):
+            soma.update(bloco)
+    return soma.hexdigest()
+
+
+def _appimage(casa: Path, pasta: Path | None,
+              antes: Mapping[str, object] | None) -> dict[str, object] | None:
+    for caminho in _caminhos_do_appimage(casa, pasta):
+        try:
+            info = caminho.stat()
+        except OSError:
+            continue
+        marca = {"caminho": str(caminho), "tamanho": info.st_size, "mtime_ns": info.st_mtime_ns}
+        if antes and all(antes.get(k) == v for k, v in marca.items()) \
+                and isinstance(antes.get("sha256"), str):
+            return {**marca, "sha256": antes["sha256"]}
+        try:
+            return {**marca, "sha256": _sha256(caminho)}
+        except OSError:
+            continue
+    return None
+
+
+def _ler_retrato(dados: Path) -> dict[str, object]:
+    try:
+        lido = json.loads((dados / RETRATO).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return lido if isinstance(lido, dict) else {}
+
+
+def retrato(lar: Path | None = None, antes: Mapping[str, object] | None = None
+            ) -> dict[str, object]:
+    casa = _lar(lar)
+    pasta = pasta_do_jogo(casa)
+    if pasta is None:
+        jogo = "falta"
+    elif (pasta / DANIFICADOS).is_file():
+        jogo = "danificado"
+    else:
+        jogo = "compilado"
+    velho = (antes or {}).get("appimage")
+    return {"versao": 1, "casa": str(casa), "pasta": str(pasta) if pasta else None, "jogo": jogo,
+            "appimage": _appimage(casa, pasta, velho if isinstance(velho, dict) else None)}
+
+
+def gravar_retrato(lar: Path | None = None) -> str:
+    dados = pasta_de_dados(lar)
+    if not dados.is_dir():
+        return "sem-dados"
+    novo = json.dumps(retrato(lar, _ler_retrato(dados)), ensure_ascii=False, indent=1) + "\n"
+    alvo = dados / RETRATO
+    try:
+        if alvo.read_text(encoding="utf-8") == novo:
+            return "igual"
+    except OSError:
+        pass
+    _gravar(alvo, novo)
+    return "escrito"
 
 
 def processos_do_jogo(proc: Path = Path("/proc")) -> list[int]:
@@ -289,7 +424,9 @@ def abrir(argumentos: Sequence[str], lar: Path | None = None,
     if processos_do_jogo(proc):
         print("hefesto-hookshot: o jogo já está aberto.", file=sys.stderr)
         return 0
-    preparar_controles(pasta)
+    with contextlib.suppress(OSError):
+        gravar_retrato(lar)
+    preparar_controles(pasta, disposicao=disposicao_escolhida(pasta_de_dados(lar)))
     argv, ambiente = linha_de_abrir(pasta, argumentos)
     os.chdir(pasta)
     os.execve(argv[0], argv, ambiente)
@@ -300,7 +437,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     if not args:
         print("uso: hookshot.py leitor | abrir [args] | controles [--forcar] | desfazer | "
-              "aberto | onde", file=sys.stderr)
+              "aberto | onde | retrato | sem-retrato", file=sys.stderr)
         return 2
     pedido, resto = args[0], args[1:]
     if pedido == "leitor":
@@ -312,12 +449,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         pids = processos_do_jogo()
         json.dump({"aberto": bool(pids), "pids": pids}, sys.stdout)
         return 0 if pids else 1
+    if pedido == "retrato":
+        print(gravar_retrato())
+        return 0
+    if pedido == "sem-retrato":
+        alvo = pasta_de_dados() / RETRATO
+        existia = alvo.is_file()
+        alvo.unlink(missing_ok=True)
+        print("removido" if existia else "nada")
+        return 0
     pasta = pasta_do_jogo()
     if pedido == "onde":
         print(pasta if pasta is not None else "")
         return 0 if pasta is not None else 1
     if pedido == "controles":
-        print(preparar_controles(pasta, forcar="--forcar" in resto) if pasta else "sem-jogo")
+        print(preparar_controles(pasta, forcar="--forcar" in resto,
+                                 disposicao=disposicao_escolhida(pasta_de_dados()))
+              if pasta else "sem-jogo")
         return 0
     if pedido == "desfazer":
         feitos = [desfazer_controles(p) for p in pastas_candidatas() if registro(p).is_file()]

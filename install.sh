@@ -83,3 +83,4 @@ StartupWMClass=hookshot"
 escrever "$PERFIL" 644 "$(cat "$RAIZ/perfis/hookshot.json")"
 
 echo "install.sh: controles: $(python3 -I "$RAIZ/hookshot.py" controles)"
+echo "install.sh: retrato: $(python3 -I "$RAIZ/hookshot.py" retrato)"

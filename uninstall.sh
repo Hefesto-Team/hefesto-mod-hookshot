@@ -31,3 +31,4 @@ if [ -f "$MANIFESTO" ]; then
     rm -f -- "$MANIFESTO"
 fi
 rmdir -- "$DADOS" 2>/dev/null || true
+echo "uninstall.sh: retrato: $(python3 -I "$RAIZ/hookshot.py" sem-retrato)"

@@ -103,3 +103,17 @@ def test_o_install_recusa_sudo(lar: Path) -> None:
     assert feito.returncode != 0
     assert "sem sudo" in feito.stderr
     assert not (lar / ".local").exists()
+
+
+def test_o_preparo_do_hefesto_grava_o_retrato_e_o_uninstall_o_tira(lar: Path) -> None:
+    jogo_compilado(lar / "Games" / "Hookshot")
+    dados = lar / ".local/state/hefesto-dualsense4unix/mods/hookshot"
+    dados.mkdir(parents=True)
+    antes = _arvore(lar)
+    feito = _rodar("install.sh", lar, "--yes")
+    assert "retrato: escrito" in feito.stdout, feito.stderr
+    retrato = (dados / hookshot.RETRATO).read_text(encoding="utf-8")
+    assert '"jogo": "compilado"' in retrato
+    assert "retrato: igual" in _rodar("install.sh", lar, "--yes").stdout
+    assert "retrato: removido" in _rodar("uninstall.sh", lar).stdout
+    assert _arvore(lar) == antes
