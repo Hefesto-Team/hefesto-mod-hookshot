@@ -6,6 +6,7 @@
   Nintendo) que vale ao abrir o jogo, um cartão por controle pela cor do plástico com a Luz, os Gatilhos e a
   Vibração, e o guia do dump numa aba.
 - A Luz, os Gatilhos Firme e a Vibração Forte de cada controle valem só com o jogo aberto.
+- O processo da extensão nasce pelo `python3 -I` do manifesto: o `servidor.py` acha a `janela.py` ao lado dele.
 
 ## 1.0.0 (14/11/2026)
 

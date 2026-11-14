@@ -13,7 +13,11 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-import janela
+AQUI = Path(__file__).resolve().parent
+if str(AQUI) not in sys.path:
+    sys.path.insert(0, str(AQUI))
+
+import janela  # noqa: E402
 
 TOPICOS = ["conexao", "perfil.jogo", "jogo.vibracao"]
 EVENTO_DA_ACAO = "extensao.acao"
