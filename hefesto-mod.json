@@ -1,7 +1,7 @@
 {
   "id": "hookshot",
   "nome": "Hookshot",
-  "versao": "1.1.0",
+  "versao": "1.2.0",
   "api": ">=2,<3",
   "licenca": "GPL-3.0-or-later",
   "descricao": "O Ocarina of Time recompilado pelo Hookshot na aba Experimental do Hefesto, com o DualSense pronto: os botões, a vibração, a mira pelo giroscópio e o perfil do jogo.",
@@ -19,13 +19,15 @@
   },
   "permissoes": [
     "lancador",
+    "pedir:lancador.abrir",
     "ler:conexao",
     "ler:perfil.jogo",
     "ler:jogo.vibracao",
     "publicar:acessorios.estado",
     "escrever:luz",
     "escrever:gatilho",
-    "escrever:vibracao"
+    "escrever:vibracao",
+    "escrever:mira"
   ],
   "preparar": [
     "bash",
@@ -83,5 +85,11 @@
     "arquivo": "pagina/dump.html",
     "rotulo": "Dump",
     "altura_max": 300
-  }
+  },
+  "acoes": [
+    {
+      "id": "jogar",
+      "rotulo": "Jogar"
+    }
+  ]
 }

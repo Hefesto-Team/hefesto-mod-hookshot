@@ -41,14 +41,16 @@ def test_as_abas_sao_jogo_controles_e_dump() -> None:
     assert m.pagina is not None and (m.pagina.rotulo, m.pagina.arquivo) == (
         "Dump", "pagina/dump.html")
     assert m.agora == ["conexoes", "linhas", "aparelhos"]
-    assert m.versao == "1.1.0"
+    assert m.versao == "1.2.0"
 
 
 def _rotulos_da_janela() -> list[str]:
     estado = janela.estado(MESA_MISTA, {}, COMPILADO)
     rotulos: list[str] = [o["rotulo"] for o in _bruto()["opcoes"]]  # (noqa-acento): chave
     rotulos += [c["rotulo"] for c in estado["aparelhos"][0]["controles"]]
-    rotulos += [o["rotulo"] for c in estado["aparelhos"][0]["controles"] for o in c["opcoes"]]
+    rotulos += [o["rotulo"] for c in estado["aparelhos"][0]["controles"]
+                for o in c.get("opcoes", [])]
+    rotulos += [a["rotulo"] for a in _bruto()["acoes"]]
     rotulos += [c["tipo"] for c in estado["conexoes"]] + [ln["rotulo"] for ln in estado["linhas"]]
     rotulos += re.findall(r"<span>([^<]+)</span>",
                           (RAIZ / "pagina" / "dump.html").read_text(encoding="utf-8"))

@@ -41,7 +41,7 @@ def test_cada_controle_aparece_pela_cor_do_plastico(tmp_path: Path,
     assert [a["nome"] for a in estado["aparelhos"]] == [
         "Starlight Blue", "White", "Cosmic Red", "Galactic Purple"]
     assert all(a["estado"] == "ligado" for a in estado["aparelhos"])
-    assert all(_valores(a) == {"luz": None, "gatilhos": "leve", "vibracao": "jogo"}
+    assert all(_valores(a) == {"luz": None, "gatilhos": "leve", "vibracao": "jogo", "giro": True}
                for a in estado["aparelhos"])
     texto = json.dumps(estado, ensure_ascii=False)
     for proibido in ("P1", "P2", "P3", "P4", AZUL, BRANCO, VERMELHO, ROXO):
@@ -72,7 +72,7 @@ def test_o_clique_na_luz_de_um_controle_so_muda_aquele(tmp_path: Path,
     estado = porta.ultimo_estado()
     assert [_valores(a)["luz"] for a in estado["aparelhos"] if a["nome"] != cor] == [None] * 3
     gravado = json.loads((tmp_path / "controles.json").read_text(encoding="utf-8"))
-    assert gravado == {alvo: {"luz": "zora", "gatilhos": "leve", "vibracao": "jogo"}}
+    assert gravado == {alvo: {"luz": "zora", "gatilhos": "leve", "vibracao": "jogo", "giro": True}}
 
 
 def test_o_segundo_clique_na_mesma_luz_devolve_a_do_hefesto(
@@ -176,10 +176,11 @@ def test_a_escolha_errada_nao_grava_e_o_estado_volta(tmp_path: Path,
     async def corpo(porta: PortaDeMentira, _ext: Any) -> None:
         antes = len(porta.de("acessorios.estado"))
         for pedido in ({"acao": "luz", "alvo": janela.ident(AZUL), "valor": "rosa"},
-                       {"acao": "giro", "alvo": janela.ident(AZUL), "valor": True},
+                       {"acao": "giro", "alvo": janela.ident(AZUL), "valor": "sim"},
+                       {"acao": "tremor", "alvo": janela.ident(AZUL), "valor": True},
                        {"acao": "luz", "alvo": "c0000000000", "valor": "zora"}):
             await porta.evento("extensao.acao", {"mod": "hookshot", **pedido})
-        await ate(lambda: len(porta.de("acessorios.estado")) == antes + 3)
+        await ate(lambda: len(porta.de("acessorios.estado")) == antes + 4)
 
     rodar_com_a_porta(tmp_path, monkeypatch, corpo, dados=tmp_path)
     assert not (tmp_path / "controles.json").exists()
@@ -196,7 +197,7 @@ def test_a_escolha_volta_depois_de_reabrir(tmp_path: Path,
 
     porta = rodar_com_a_porta(tmp_path, monkeypatch, corpo, dados=tmp_path)
     assert _valores(_cartao(porta.ultimo_estado(), "Starlight Blue")) == {
-        "luz": "fada", "gatilhos": "firme", "vibracao": "forte"}
+        "luz": "fada", "gatilhos": "firme", "vibracao": "forte", "giro": True}
 
 
 @pytest.mark.parametrize("quantos", [1, 2, 3, 4])

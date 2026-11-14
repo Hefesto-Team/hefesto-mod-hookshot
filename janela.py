@@ -17,13 +17,17 @@ LUZES: dict[str, tuple[str, str]] = {
 }
 GATILHOS: dict[str, str] = {"leve": "Leve", "firme": "Firme"}
 VIBRACOES: dict[str, str] = {"jogo": "Jogo", "forte": "Forte"}
-PADRAO: dict[str, str | None] = {"luz": None, "gatilhos": "leve", "vibracao": "jogo"}
+PADRAO: dict[str, str | bool | None] = {"luz": None, "gatilhos": "leve", "vibracao": "jogo",
+                                        "giro": True}
 FIRME: tuple[str, list[int]] = ("Feedback", [2, 7])
 GANHO_DO_FORTE = 1.5
 
 DICA_DA_LUZ = "A cor da barra com o jogo aberto; outro clique na mesma devolve a do Hefesto"
 DICA_DOS_GATILHOS = "Leve: o toque do perfil. Firme: o gatilho resiste desde o começo"
 DICA_DA_VIBRACAO = "Forte: a vibração do jogo uma vez e meia neste controle"
+DICA_DO_GIRO = "Desligado: a mira pelo giroscópio fica parada neste controle com o jogo aberto"
+ACAO_DE_JOGAR = "jogar"
+SEM_O_ABRIR = "Este Hefesto não abre o jogo"
 
 
 def ident(uniq: str) -> str:
@@ -37,6 +41,8 @@ def valida(acao: str, valor: object) -> bool:
         return valor in GATILHOS
     if acao == "vibracao":
         return valor in VIBRACOES
+    if acao == "giro":
+        return isinstance(valor, bool)
     return False
 
 
@@ -70,6 +76,8 @@ def controles_do_cartao(escolha: Mapping[str, Any]) -> list[dict[str, Any]]:
         {"id": "vibracao", "tipo": "escolha", "rotulo": "Vibração", "valor": escolha["vibracao"],
          "dica": DICA_DA_VIBRACAO,
          "opcoes": [{"id": k, "rotulo": r} for k, r in VIBRACOES.items()]},
+        {"id": "giro", "tipo": "chave", "rotulo": "Giroscópio", "valor": escolha["giro"],
+         "dica": DICA_DO_GIRO},
     ]
 
 
@@ -115,9 +123,9 @@ def conexoes(retrato: Mapping[str, Any]) -> list[dict[str, Any]]:
              "estado": jogo[0], "motivo": jogo[1]}]
 
 
-def linhas(retrato: Mapping[str, Any]) -> list[dict[str, str]]:
+def linhas(retrato: Mapping[str, Any], recusa: str | None = None) -> list[dict[str, str]]:
     casa = str(retrato.get("casa") or "")
-    saida = []
+    saida = [{"rotulo": "Jogar", "valor": recusa[:40]}] if recusa else []
     pasta = retrato.get("pasta")
     if isinstance(pasta, str) and pasta:
         saida.append({"rotulo": "Pasta", "valor": _curto(pasta, casa)})
@@ -132,10 +140,10 @@ def linhas(retrato: Mapping[str, Any]) -> list[dict[str, str]]:
 
 
 def estado(controles: Sequence[Mapping[str, Any]], escolhas: Mapping[str, Mapping[str, Any]],
-           retrato: Mapping[str, Any]) -> dict[str, Any]:
+           retrato: Mapping[str, Any], recusa: str | None = None) -> dict[str, Any]:
     return {"ligado": True, "nivel": 0, "perfil": None,
             "aparelhos": aparelhos(controles, escolhas),
-            "conexoes": conexoes(retrato), "linhas": linhas(retrato)}
+            "conexoes": conexoes(retrato), "linhas": linhas(retrato, recusa)[:6]}
 
 
 def em_cena(dados: Mapping[str, Any]) -> bool:

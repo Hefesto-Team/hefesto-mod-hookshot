@@ -35,7 +35,15 @@ def diario(frase: str) -> None:
 
 
 class RecusaDaPorta(RuntimeError):
-    pass
+    def __init__(self, mensagem: str, codigo: int | None = None) -> None:
+        super().__init__(mensagem)
+        self.codigo = codigo
+
+
+METODO_DESCONHECIDO = -32601
+JOGO = {"chave": "hookshot-ocarina-of-time",
+        "nome": "The Legend of Zelda: Ocarina of Time (Hookshot)",
+        "abrir": ["hefesto-hookshot"], "janela": "hookshot"}
 
 
 class Porta:
@@ -86,7 +94,9 @@ class Porta:
         resposta = await asyncio.wait_for(espera, 10)
         if "error" in resposta:
             erro = resposta["error"] if isinstance(resposta["error"], dict) else {}
-            raise RecusaDaPorta(str(erro.get("message", "recusado")))
+            codigo = erro.get("code")
+            raise RecusaDaPorta(str(erro.get("message", "recusado")),
+                                codigo if isinstance(codigo, int) else None)
         resultado: dict[str, Any] = resposta.get("result") or {}
         return resultado
 
@@ -108,6 +118,7 @@ class Extensao:
         self._marca_do_retrato: int | None = None
         self._vibrou: dict[str, tuple[float, tuple[int, int]]] = {}
         self.pedidos: set[tuple[str, str]] = set()
+        self.recusa_do_jogar: str | None = None
         self.ler_o_retrato()
 
     def _ler_as_escolhas(self) -> dict[str, dict[str, Any]]:
@@ -153,7 +164,7 @@ class Extensao:
         return True
 
     def estado(self) -> dict[str, Any]:
-        return janela.estado(self.controles, self.escolhas, self.retrato)
+        return janela.estado(self.controles, self.escolhas, self.retrato, self.recusa_do_jogar)
 
     async def publicar(self) -> None:
         await self.porta.pedir("acessorios.estado", self.estado())
@@ -178,6 +189,7 @@ class Extensao:
         elif (uniq, "luz") in self.pedidos:
             self.pedidos.discard((uniq, "luz"))
             await self._escrever("luz.set", {"uniq": uniq, "rgb": [0, 0, 0]})
+        await self.aplicar_o_giro(uniq, escolha)
         firme = self.em_cena and escolha["gatilhos"] == "firme"
         if not firme and (uniq, "gatilhos") not in self.pedidos:
             return
@@ -194,6 +206,34 @@ class Extensao:
         else:
             self.pedidos.discard((uniq, "gatilhos"))
 
+    async def aplicar_o_giro(self, uniq: str, escolha: dict[str, Any]) -> None:
+        desligado = self.em_cena and escolha["giro"] is False
+        if desligado == ((uniq, "giro") in self.pedidos):
+            return
+        if desligado:
+            self.pedidos.add((uniq, "giro"))
+        else:
+            self.pedidos.discard((uniq, "giro"))
+        await self._escrever("mira.ligada", {"uniq": uniq, "ligada": not desligado})
+
+    async def jogar(self) -> None:
+        try:
+            await self.porta.pedir("lancador.abrir", {"chave": JOGO["chave"]})
+            self.recusa_do_jogar = None
+        except RecusaDaPorta as exc:
+            diario(f"lancador.abrir: {exc}")
+            self.recusa_do_jogar = (janela.SEM_O_ABRIR if exc.codigo == METODO_DESCONHECIDO
+                                    else str(exc))
+        except asyncio.TimeoutError:
+            self.recusa_do_jogar = "O Hefesto não respondeu"
+        await self.publicar()
+
+    async def entregar_o_jogo(self) -> None:
+        try:
+            await self.porta.pedir("lancador.jogos", {"jogos": [JOGO]})
+        except (RecusaDaPorta, asyncio.TimeoutError) as exc:
+            diario(f"lancador.jogos: {exc}")
+
     async def aplicar_a_todos(self) -> None:
         for c in list(self.controles):
             await self.aplicar(str(c["uniq"]))
@@ -208,6 +248,9 @@ class Extensao:
 
     async def agir(self, dados: dict[str, Any]) -> None:
         acao, alvo, valor = dados.get("acao"), dados.get("alvo"), dados.get("valor")
+        if acao == janela.ACAO_DE_JOGAR:
+            await self.jogar()
+            return
         uniq = self._uniq_de(alvo)
         if uniq is None or not isinstance(acao, str) or acao not in janela.PADRAO:
             await self.publicar()
@@ -293,6 +336,7 @@ async def rodar(ao_nascer: Callable[[Extensao], None] | None = None) -> int:
     await porta.pedir("mod.ola", {"ficha": ficha})
     extensao = Extensao(porta, dados)
     await porta.pedir("eventos.assinar", {"topicos": TOPICOS})
+    await extensao.entregar_o_jogo()
     try:
         await extensao.atualizar_os_controles()
     except (RecusaDaPorta, asyncio.TimeoutError) as exc:
