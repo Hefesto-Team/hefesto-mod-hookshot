@@ -118,10 +118,15 @@ def test_abrir_de_ponta_a_ponta_prepara_os_botoes_e_entrega_o_ambiente(lar: Path
     assert hookshot.registro(pasta).is_file()
 
 
-def test_abrir_com_o_jogo_ja_aberto_nao_abre_outro(lar: Path, tmp_path: Path) -> None:
+def test_abrir_com_o_jogo_ja_aberto_nao_abre_outro(lar: Path, tmp_path: Path,
+                                                   monkeypatch: pytest.MonkeyPatch) -> None:
     pasta = jogo_compilado(lar / "Games" / "Hookshot")
     proc = _proc(tmp_path / "proc", {4321: "hookshot"})
+    abertos: list[str] = []
+    monkeypatch.setattr(os, "execve", lambda *a: abertos.append(str(a[0])))
+    monkeypatch.setattr(os, "chdir", lambda *a: None)
     assert hookshot.abrir([], lar, proc) == 0
+    assert abertos == []
     assert not (pasta / hookshot.OPCOES).exists()
 
 
