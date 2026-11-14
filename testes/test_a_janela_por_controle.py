@@ -124,6 +124,8 @@ def test_a_vibracao_forte_reforca_so_o_controle_escolhido(
                                              "alvo": janela.ident(ROXO), "valor": "forte"})
         await ate(lambda: _valores(_cartao(porta.ultimo_estado(), "Galactic Purple"))[
             "vibracao"] == "forte")
+        await porta.evento("perfil.trocou", NA_CENA, "perfil.jogo")
+        await ate(lambda: ext.em_cena)
         relogio = [0.0]
         ext.relogio = lambda: relogio[0]
         for quando, uniq, pedido in ((1.0, AZUL, [100, 200]), (1.0, ROXO, [100, 200]),
@@ -139,6 +141,35 @@ def test_a_vibracao_forte_reforca_so_o_controle_escolhido(
         {"uniq": ROXO, "fraco": 180, "forte": 255},
         {"uniq": ROXO, "fraco": 0, "forte": 0}]
 
+
+
+def test_a_vibracao_forte_nao_toca_outro_jogo_e_solta_ao_sair_do_hookshot(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    async def corpo(porta: PortaDeMentira, ext: Any) -> None:
+        await porta.evento("extensao.acao", {"mod": "hookshot", "acao": "vibracao",
+                                             "alvo": janela.ident(ROXO), "valor": "forte"})
+        await ate(lambda: _valores(_cartao(porta.ultimo_estado(), "Galactic Purple"))[
+            "vibracao"] == "forte")
+        relogio = [0.0]
+        ext.relogio = lambda: relogio[0]
+        for quando in (1.0, 1.5, 2.0):
+            relogio[0] = quando
+            await ext.vibracao_do_jogo({"uniq": ROXO}, {"uniq": ROXO, "pedido": [100, 200]})
+        assert porta.de("vibracao.set") == []
+        await porta.evento("perfil.trocou", NA_CENA, "perfil.jogo")
+        await ate(lambda: ext.em_cena)
+        relogio[0] = 3.0
+        await ext.vibracao_do_jogo({"uniq": ROXO}, {"uniq": ROXO, "pedido": [100, 200]})
+        await porta.evento("perfil.trocou", FORA_DE_CENA, "perfil.jogo")
+        await ate(lambda: not ext.em_cena)
+        for quando in (3.5, 4.0):
+            relogio[0] = quando
+            await ext.vibracao_do_jogo({"uniq": ROXO}, {"uniq": ROXO, "pedido": [100, 200]})
+
+    porta = rodar_com_a_porta(tmp_path, monkeypatch, corpo, dados=tmp_path)
+    assert porta.de("vibracao.set") == [
+        {"uniq": ROXO, "fraco": 150, "forte": 255},
+        {"uniq": ROXO, "fraco": 0, "forte": 0}]
 
 def test_a_escolha_errada_nao_grava_e_o_estado_volta(tmp_path: Path,
                                                     monkeypatch: pytest.MonkeyPatch) -> None:

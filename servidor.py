@@ -233,7 +233,7 @@ class Extensao:
         if janela.escolha_de(self.escolhas, janela.ident(uniq))["vibracao"] != "forte":
             return
         pedido = dados.get("pedido")
-        par = janela.forte(pedido if isinstance(pedido, list) else [])
+        par = janela.forte(pedido if isinstance(pedido, list) else []) if self.em_cena else (0, 0)
         agora = self.relogio()
         quando, ultimo = self._vibrou.get(uniq, (-1e9, (0, 0)))
         if par == ultimo and (par == (0, 0) or agora - quando < MANTER_A_VIBRACAO_S):
